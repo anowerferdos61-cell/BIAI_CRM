@@ -26,13 +26,19 @@ export function SupportInboxView({
 
   const nonSalesLeads = leads.filter((l) => (l.leadType || 'Sales') !== 'Sales');
   const supportLeads = nonSalesLeads.filter((l) => l.leadType === 'Support');
+  const openSupportCount = supportLeads.filter((l) => !l.isResolved).length;
+  const resolvedSupportCount = supportLeads.filter((l) => l.isResolved).length;
   const jobLeads = nonSalesLeads.filter((l) => l.leadType === 'Job Seeker');
   const spamLeads = nonSalesLeads.filter((l) => l.leadType === 'Spam');
 
   const visibleLeads =
     filterType === 'all'
       ? nonSalesLeads
-      : nonSalesLeads.filter((l) => l.leadType === filterType);
+      : filterType === 'open-support'
+        ? supportLeads.filter((l) => !l.isResolved)
+        : filterType === 'resolved-support'
+          ? supportLeads.filter((l) => l.isResolved)
+          : nonSalesLeads.filter((l) => l.leadType === filterType);
 
   return (
     <div className="space-y-4 pb-10">
@@ -73,8 +79,34 @@ export function SupportInboxView({
             }`}
           >
             <LifeBuoy className="h-3.5 w-3.5" />
-            <span>Support &amp; Refunds ({supportLeads.length})</span>
+            <span>
+              Support ({openSupportCount > 0 ? `${openSupportCount} Open` : '0 Open'}{resolvedSupportCount > 0 ? `, ${resolvedSupportCount} Resolved` : ''})
+            </span>
           </button>
+          {openSupportCount > 0 && (
+            <button
+              onClick={() => setFilterType('open-support')}
+              className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors inline-flex items-center space-x-1 ${
+                filterType === 'open-support'
+                  ? 'bg-[#B45309] text-white'
+                  : 'bg-[#FFFBEB] text-[#B45309] border border-[#FDE68A]'
+              }`}
+            >
+              <span>🚨 Urgent Action Required ({openSupportCount})</span>
+            </button>
+          )}
+          {resolvedSupportCount > 0 && (
+            <button
+              onClick={() => setFilterType('resolved-support')}
+              className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors inline-flex items-center space-x-1 ${
+                filterType === 'resolved-support'
+                  ? 'bg-[#059669] text-white'
+                  : 'bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]'
+              }`}
+            >
+              <span>✓ Resolved Cases ({resolvedSupportCount})</span>
+            </button>
+          )}
           <button
             onClick={() => setFilterType('Job Seeker')}
             className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors inline-flex items-center space-x-1 ${
