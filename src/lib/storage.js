@@ -149,14 +149,29 @@ export async function upsertLeadToCloud(lead) {
   if (!supabase || !lead?.id) return false;
   try {
     const row = leadToDbRow(lead);
-    const { error } = await supabase.from('leads').upsert(row, { onConflict: 'id' });
-    if (error) {
-      console.error('Supabase lead upsert error:', error.message);
+    // Try update first (works reliably with Supabase UPDATE RLS)
+    const { error: updateError, data } = await supabase
+      .from('leads')
+      .update(row)
+      .eq('id', row.id)
+      .select('id');
+
+    if (!updateError && data && data.length > 0) {
+      return true;
+    }
+
+    // If row did not exist to update, attempt upsert/insert
+    const { error: upsertError } = await supabase
+      .from('leads')
+      .upsert(row, { onConflict: 'id' });
+
+    if (upsertError) {
+      console.warn('Supabase lead upsert fallback:', upsertError.message);
       return false;
     }
     return true;
   } catch (e) {
-    console.error('Network failure upserting lead to Supabase:', e);
+    console.error('Network failure updating lead to Supabase:', e);
     return false;
   }
 }
