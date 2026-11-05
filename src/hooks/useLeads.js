@@ -624,24 +624,19 @@ export function useLeads({ showToast }) {
         text: `Sent reply via ${appName}: "${finalReply.slice(0, 80)}${finalReply.length > 80 ? '...' : ''}"`
       };
 
-      let updatedLead = null;
-      setLeads((prev) =>
-        prev.map((item) => {
-          if (item.id !== targetLead.id) return item;
-          updatedLead = {
-            ...item,
-            status: nextStatus,
-            lastContactedAt: nowStr,
-            suggestedReply: finalReply,
-            notes: [sendNote, ...(item.notes || [])]
-          };
-          return updatedLead;
-        })
-      );
+      const targetUpdated = {
+        ...targetLead,
+        status: nextStatus,
+        lastContactedAt: nowStr,
+        suggestedReply: finalReply,
+        notes: [sendNote, ...(targetLead.notes || [])]
+      };
 
-      if (updatedLead) {
-        upsertLeadToCloud(updatedLead);
-      }
+      upsertLeadToCloud(targetUpdated);
+
+      setLeads((prev) =>
+        prev.map((item) => (item.id === targetLead.id ? targetUpdated : item))
+      );
 
       if (showToast) {
         showToast(`Opened ${appName} & recorded contact for ${targetLead.senderName}.`);
@@ -663,24 +658,19 @@ export function useLeads({ showToast }) {
         : 'Reopened case for follow-up.'
     };
 
-    let updatedLead = null;
-    setLeads((prev) =>
-      prev.map((item) => {
-        if (item.id !== id) return item;
-        updatedLead = {
-          ...item,
-          isResolved: nextResolved,
-          resolvedAt: nextResolved ? nowStr : null,
-          lastContactedAt: nowStr,
-          notes: [note, ...(item.notes || [])]
-        };
-        return updatedLead;
-      })
-    );
+    const targetUpdated = {
+      ...target,
+      isResolved: nextResolved,
+      resolvedAt: nextResolved ? nowStr : null,
+      lastContactedAt: nowStr,
+      notes: [note, ...(target.notes || [])]
+    };
 
-    if (updatedLead) {
-      upsertLeadToCloud(updatedLead);
-    }
+    upsertLeadToCloud(targetUpdated);
+
+    setLeads((prev) =>
+      prev.map((item) => (item.id === id ? targetUpdated : item))
+    );
 
     if (showToast) {
       showToast(

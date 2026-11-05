@@ -53,10 +53,44 @@ export default function App() {
     exportLeadsToCSV
   } = useLeads({ showToast });
 
-  // Navigation & Sidebar State
-  const [activeTab, setActiveTab] = useState('overview');
+  // Navigation & URL Hash Router State (e.g. /#pipeline, /#support, /#enquiries)
+  const getInitialTabFromHash = () => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hash = window.location.hash.replace('#', '').trim();
+      const validTabs = ['overview', 'pipeline', 'enquiries', 'support', 'magic-paste', 'weekly-summary', 'database'];
+      if (validTabs.includes(hash)) return hash;
+    }
+    return 'overview';
+  };
+
+  const [activeTab, setActiveTabState] = useState(getInitialTabFromHash);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Sync activeTab with window URL hash so page reload NEVER resets to overview
+  const setActiveTab = useCallback((tabId) => {
+    setActiveTabState(tabId);
+    if (typeof window !== 'undefined') {
+      window.location.hash = tabId;
+    }
+  }, []);
+
+  // Listen to browser forward/backward buttons and hash changes
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '').trim();
+      const validTabs = ['overview', 'pipeline', 'enquiries', 'support', 'magic-paste', 'weekly-summary', 'database'];
+      if (validTabs.includes(hash)) {
+        setActiveTabState(hash);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    // Set initial hash if none exists
+    if (!window.location.hash) {
+      window.location.hash = 'overview';
+    }
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // Filter State
   const [searchQuery, setSearchQuery] = useState('');

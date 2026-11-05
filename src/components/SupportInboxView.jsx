@@ -27,7 +27,6 @@ export function SupportInboxView({
   const nonSalesLeads = leads.filter((l) => (l.leadType || 'Sales') !== 'Sales');
   const supportLeads = nonSalesLeads.filter((l) => l.leadType === 'Support');
   const openSupportCount = supportLeads.filter((l) => !l.isResolved).length;
-  const resolvedSupportCount = supportLeads.filter((l) => l.isResolved).length;
   const jobLeads = nonSalesLeads.filter((l) => l.leadType === 'Job Seeker');
   const spamLeads = nonSalesLeads.filter((l) => l.leadType === 'Spam');
 
